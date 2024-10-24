@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bullet Collision with Particle Explosion</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const bulletSpeed = 5;
+        const particleCount = 100;
+        const particleLifespan = 100;
+        let particles = [];
+        let bulletX = 0;
+        let bulletY = canvas.height / 2;
+        let bulletActive = true;
+        let animationFrame;
+
+        // Bullet color and size
+        const bullet = {
+            x: bulletX,
+            y: bulletY,
+            radius: 5,
+            color: "red"
+        };
+
+        // Function to create particles
+        function createParticles(x, y) {
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.random() * 4 - 2,  // Random velocity between -2 and 2
+                    vy: Math.random() * 4 - 2,
+                    lifespan: particleLifespan,
+                    size: Math.random() * 3 + 1,  // Random size between 1 and 4
+                    color: "yellow"
+                });
+            }
+        }
+
+        // Function to update bullet position
+        function updateBullet() {
+            if (bulletActive) {
+                bullet.x += bulletSpeed;
+
+                // Check if bullet hits the "wall"
+                if (bullet.x >= canvas.width - 20) {
+                    bulletActive = false;
+                    createParticles(bullet.x, bullet.y);
+                }
+            }
+        }
+
+        // Function to update particles
+        function updateParticles() {
+            particles = particles.filter(p => p.lifespan > 0);  // Remove dead particles
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.lifespan--;
+                p.size *= 0.96;  // Slowly shrink particles
+            });
+        }
+
+        // Function to draw bullet
+        function drawBullet() {
+            ctx.beginPath();
+            ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+            ctx.fillStyle = bullet.color;
+            ctx.fill();
+        }
+
+        // Function to draw particles
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.lifespan / particleLifespan;  // Fade out particles over time
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;  // Reset alpha
+        }
+
+        // Main animation loop
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (bulletActive) {
+                updateBullet();
+                drawBullet();
+            }
+            updateParticles();
+            drawParticles();
+
+            animationFrame = requestAnimationFrame(animate);
+        }
+
+        // Reset bullet and particles every 10 seconds
+        function reset() {
+            bullet.x = 0;
+            bulletActive = true;
+            particles = [];
+        }
+
+        setInterval(reset, 5000);  // Reset every 10 seconds
+
+        // Start the animation
+        animate();
+    </script>
+</body>
+</html>
